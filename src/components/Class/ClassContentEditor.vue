@@ -1,8 +1,14 @@
 <template>
-    <div style="display: flex; padding: 3px">
+    <div style="display: flex;" @click.stop="handleClick">
         <div class="left"></div>
         <div class="contentEditor">
-            <el-select v-model="contentType" placeholder="类型" class="selectorStyle" size="mini">
+            <el-select
+                v-model="contentType"
+                placeholder="类型"
+                class="selectorStyle"
+                size="mini"
+                style="selectorStyle"
+            >
                 <el-option
                     v-for="item in contentOptions"
                     :key="item.value"
@@ -10,7 +16,13 @@
                     :value="item.value"
                 ></el-option>
             </el-select>
-            <el-select v-model="modifier" placeholder="修饰符" class="selectorStyle" size="mini">
+            <el-select
+                v-model="modifier"
+                placeholder="修饰符"
+                class="selectorStyle"
+                size="mini"
+                style="selectorStyle"
+            >
                 <el-option
                     v-for="item in modifierOptions"
                     :key="item.value"
@@ -18,7 +30,13 @@
                     :value="item.value"
                 ></el-option>
             </el-select>
-            <el-select v-model="dataType" placeholder="数据类型" class="selectorStyle" size="mini">
+            <el-select
+                v-model="dataType"
+                placeholder="数据类型"
+                class="selectorStyle"
+                size="mini"
+                style="selectorStyle"
+            >
                 <el-option
                     v-for="item in dataTypeOptions"
                     :key="item.value"
@@ -35,7 +53,7 @@
                 placeholder="方法参数"
             ></el-input>
             <el-button type="success" round icon="el-icon-check" size="mini"></el-button>
-            <el-button type="danger" round icon="el-icon-close" size="mini"></el-button>
+            <el-button type="danger" round icon="el-icon-delete" size="mini"></el-button>
         </div>
     </div>
 </template>
@@ -71,6 +89,9 @@ export default {
                 this.params = data.params;
             }
         }
+    },
+    methods: {
+        handleClick() {}
     }
 };
 </script>
@@ -95,5 +116,8 @@ export default {
     background-color: #fff;
     border-radius: 1%;
     box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+.selectorStyle {
+    width: 100px;
 }
 </style>
