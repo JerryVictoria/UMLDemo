@@ -1,34 +1,39 @@
 <template>
-    <div class="classStyle">
-        <div
-            class="className"
-            :style="{width: parseInt(this.width)*0.99 + 'px' , height: parseInt(this.height)*0.25 + 'px'}"
-            @click.stop="handleClick"
-        >
-            <el-input
-                v-show="showClassInput"
-                size="mini"
-                v-model="className"
-                style="margin-top: 2px; font-size: 16px"
-            ></el-input>
-            <span
-                v-show="!showClassInput"
-                style="line-height: 30px; vertical-align: middle;"
-            >{{className}}</span>
+    <div
+        v-clickoutside="hideInputAndSave"
+        @click.stop="setEditingId"
+        :style="{width: this.width + 'px' , height: this.height*0.95 + 'px'}"
+    >
+        <div class="className" :style="{width: this.width + 'px', height: this.height*0.25 + 'px'}">
+            <div>
+                <el-input
+                    class="contentSpan"
+                    v-if="showClassInput && this.id == $store.state.editingId"
+                    size="mini"
+                    v-model="className"
+                    style="margin-top: 2px; font-size: 16px"
+                ></el-input>
+                <span
+                    @click="handleClick"
+                    class="contentSpan"
+                    v-else
+                    style="line-height: 30px; vertical-align: middle;"
+                >{{className}}</span>
+            </div>
         </div>
         <div
             class="classContent"
-            :style="{width: parseInt(this.width)*0.99 + 'px', height: parseInt(this.height)*0.7 + 'px'}"
+            :style="{width: this.width + 'px', height: this.height*0.7 + 'px'}"
         >
             <ClassContentEditor
-                id="classContentEditor"
-                v-show="showContentInput"
+                :ref="'classContentEditor' + id"
+                v-show="showContentInput && this.id == $store.state.editingId"
                 :initData="initData"
             ></ClassContentEditor>
             <template v-for="(item, index) in variables">
                 <span
-                    :class="{contentSpan: true, hoverSpan: hoverItem === item}"
-                    @click.stop="handleContentClick(item, 'variable', $event)"
+                    :class="{'contentSpan alignLeft': true, hoverSpan: hoverItem === item && id == $store.state.editingId}"
+                    @click="handleContentClick(item, 'variable', $event)"
                     :key="index + item.name"
                 >
                     {{item.modifier + " " + item.dataType + " " + item.name + ";"}}
@@ -38,14 +43,19 @@
             <div class="horizontalSplitLine" v-show="variables.length > 0 && functions.length > 0"></div>
             <template v-for="(item, index) in functions">
                 <span
-                    :class="{contentSpan: true, hoverSpan: hoverItem === item}"
-                    @click.stop="handleContentClick(item, 'function', $event)"
+                    :class="{'contentSpan alignLeft': true, hoverSpan: hoverItem === item && id == $store.state.editingId}"
+                    @click="handleContentClick(item, 'function', $event)"
                     :key="index + item.name"
                 >
                     {{item.modifier + " " + item.dataType + " " + item.name + "(" + item.params + ");"}}
                     <br />
                 </span>
             </template>
+            <div class="horizontalSplitLine" v-show="variables.length > 0 || functions.length > 0"></div>
+            <el-button
+                class="contentSpan hoverSpan"
+                @click.stop="handleContentClick({}, '', $event)"
+            >+</el-button>
         </div>
     </div>
 </template>
@@ -61,38 +71,17 @@ export default {
     props: {
         id: String,
         type: String, // e.g. class
-        styles: {
-            width: Number,
-            hight: Number,
-            positionX: Number,
-            positionY: Number
-        },
-        properties: {
-            // 各个组件不一样，这里以类图里的类举例
-            className: String,
-            type: String, // e.g. abstract
-            variables: Array,
-            functions: Array
-        }
+        styles: Object,
+        properties: Object
     },
     data() {
         return {
             showClassInput: false,
             showContentInput: false,
-            className: "someClass",
+            className: "",
             classType: "", // e.g. abstract
-            variables: [
-                { modifier: "public", dataType: "boolean", name: "var1" },
-                { modifier: "public", dataType: "char", name: "var2" }
-            ], // mock data
-            functions: [
-                {
-                    modifier: "public",
-                    dataType: "int",
-                    name: "func",
-                    params: "int count"
-                }
-            ],
+            variables: [], // mock data
+            functions: [],
             initData: {
                 contentType: "",
                 modifier: "",
@@ -103,26 +92,69 @@ export default {
             hoverItem: null
         };
     },
+    watch: {
+        styles: {
+            deep: true,
+            handler(sty) {
+                this.width = sty.width;
+                this.height = sty.height;
+            }
+        },
+        properties: {
+            deep: true,
+            handler(prop) {
+                this.className = prop.className;
+                this.classType = prop.classType;
+                this.variables = prop.variables;
+                this.functions = prop.functions;
+            }
+        },
+        className(cn) {
+            this.$store.commit("modifyNode", {
+                nodeKey: "properties",
+                key: "className",
+                value: cn,
+                id: this.id
+            });
+        }
+    },
+    mounted() {
+        if (this.styles) {
+            this.width = this.styles.width ? this.styles.width : this.width;
+            this.height = this.styles.height ? this.styles.height : this.height;
+        }
+        if (this.properties) {
+            this.className = this.properties.className;
+            this.classType = this.properties.classType;
+            this.variables = this.properties.variables;
+            this.functions = this.properties.functions;
+        }
+    },
     methods: {
         handleClick() {
             this.showClassInput = true;
             this.showContentInput = false;
             this.hoverItem = null;
+            this.setEditStateTrue();
         },
         handleContentClick(item, contentType, event) {
             this.hoverItem = item;
             this.initData = item;
             this.initData.contentType = contentType;
-            let classContentEditor = document.getElementById(
-                "classContentEditor"
-            );
-            classContentEditor.style.left = event.clientX + 10 + "px";
-            classContentEditor.style.top = event.clientY - 10 + "px";
+            let classContentEditor = this.$refs["classContentEditor" + this.id]
+                .$el;
+            classContentEditor.style.left = event.clientX + "px";
+            classContentEditor.style.top = event.clientY + "px";
             classContentEditor.style.position = "fixed";
             this.showContentInput = true;
             this.showClassInput = false;
+            this.setEditStateTrue();
         },
         hideInputAndSave() {
+            if (!this.showClassInput && !this.showContentInput) {
+                return;
+            }
+            this.setEditStateFalse();
             this.hoverItem = null;
             this.showClassInput = false;
             this.showContentInput = false;
@@ -151,6 +183,11 @@ export default {
     display: inline-block;
     min-height: 20px;
     padding: 2px;
+    width: 80%;
+    cursor: pointer;
+}
+.alignLeft {
+    text-align: left;
 }
 .horizontalSplitLine {
     border-bottom: 1px dashed grey;
@@ -159,14 +196,8 @@ export default {
     margin-top: 2px;
     margin-bottom: 4px;
 }
-.classStyle {
-    background-color: #fff;
-    border-radius: 1%;
-    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-}
 .hoverSpan {
-    background-color: #409eff;
-    border-radius: 10%;
+    background-color: #a6c0db;
     color: white;
 }
 </style>
