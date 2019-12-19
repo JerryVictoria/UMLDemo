@@ -1,6 +1,6 @@
 <template>
-    <div style="display: flex;" @click.stop="handleClick">
-        <div class="left"></div>
+    <div @click.stop="handleClick" style="z-index: 99">
+        <div class="top"></div>
         <div class="contentEditor">
             <el-select
                 v-model="contentType"
@@ -100,13 +100,13 @@ export default {
     width: 80px;
     padding: 1px;
 }
-.left {
+.top {
     width: 0px;
     height: 0px;
-    border-bottom: 10px solid transparent;
-    border-left: 10px solid transparent;
-    border-right: 10px solid #ebeef5;
     border-top: 10px solid transparent;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 10px solid #ebeef5;
 }
 .contentEditor {
     padding: 2px;
