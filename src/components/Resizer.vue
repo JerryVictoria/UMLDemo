@@ -77,7 +77,6 @@ export default {
     methods: {
         handleClickOutSide() {
             this.$store.commit("setEditState", { editing: false });
-            this.$store.commit("setEditId", { id: "" });
         },
         pauseEvent(e) {
             if (e.stopPropagation) e.stopPropagation();
@@ -109,7 +108,7 @@ export default {
             document.body.style.cursor = "default";
             console.log("up");
             //数据修改
-            if (this.id == this.$store.state.selectedId) {
+            if (this.id == this.$store.state.editingId) {
                 this.$slots.default[0].componentInstance.commitWidth();
                 this.$slots.default[0].componentInstance.commitHeight();
             }
