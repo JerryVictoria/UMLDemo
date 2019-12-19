@@ -1,29 +1,53 @@
 <template>
-    <div :class="{wrapbox : showResizer}" draggable>
-        <div v-if="showResizer" class="line line-t" data-type="t" @mousedown="mousedownHanlder" />
-        <div v-if="showResizer" class="line line-l" data-type="l" @mousedown="mousedownHanlder" />
-        <div v-if="showResizer" class="line line-r" data-type="r" @mousedown="mousedownHanlder" />
-        <div v-if="showResizer" class="line line-b" data-type="b" @mousedown="mousedownHanlder" />
+    <div
+        class="wrapbox"
+        :draggable="$store.state.editingId == id && !$store.state.editing"
+        v-clickoutside="handleClickOutSide"
+    >
         <div
-            v-if="showResizer"
+            v-show="$store.state.editingId == id && !$store.state.editing"
+            class="line line-t"
+            data-type="t"
+            @mousedown="mousedownHanlder"
+        />
+        <div
+            v-show="$store.state.editingId == id && !$store.state.editing"
+            class="line line-l"
+            data-type="l"
+            @mousedown="mousedownHanlder"
+        />
+        <div
+            v-show="$store.state.editingId == id && !$store.state.editing"
+            class="line line-r"
+            data-type="r"
+            @mousedown="mousedownHanlder"
+        />
+        <div
+            v-show="$store.state.editingId == id && !$store.state.editing"
+            class="line line-b"
+            data-type="b"
+            @mousedown="mousedownHanlder"
+        />
+        <div
+            v-show="$store.state.editingId == id && !$store.state.editing"
             class="block block-tl"
             data-type="tl"
             @mousedown="mousedownHanlder"
         />
         <div
-            v-if="showResizer"
+            v-show="$store.state.editingId == id && !$store.state.editing"
             class="block block-tr"
             data-type="tr"
             @mousedown="mousedownHanlder"
         />
         <div
-            v-if="showResizer"
+            v-show="$store.state.editingId == id && !$store.state.editing"
             class="block block-bl"
             data-type="bl"
             @mousedown="mousedownHanlder"
         />
         <div
-            v-if="showResizer"
+            v-if="$store.state.editingId == id && !$store.state.editing"
             class="block block-br"
             data-type="br"
             @mousedown="mousedownHanlder"
@@ -34,9 +58,11 @@
 <script>
 export default {
     name: "Resizer",
+    props: {
+        id: String
+    },
     data() {
         return {
-            showResizer: true,
             max: { height: 1000, width: 1000 },
             min: { height: 0, width: 0 },
             speed: 1
@@ -49,6 +75,10 @@ export default {
         document.body.removeEventListener("mouseup", this.mouseupHanlder);
     },
     methods: {
+        handleClickOutSide() {
+            this.$store.commit("setEditState", { editing: false });
+            this.$store.commit("setEditId", { id: "" });
+        },
         pauseEvent(e) {
             if (e.stopPropagation) e.stopPropagation();
             if (e.preventDefault) e.preventDefault();
@@ -78,6 +108,11 @@ export default {
             );
             document.body.style.cursor = "default";
             console.log("up");
+            //数据修改
+            if (this.id == this.$store.state.selectedId) {
+                this.$slots.default[0].componentInstance.commitWidth();
+                this.$slots.default[0].componentInstance.commitHeight();
+            }
         },
         mousemoveHandler(event) {
             this.pauseEvent(event);
@@ -87,10 +122,10 @@ export default {
             this[this.dataType]({ event, width, height });
             this.event = event;
             this.$slots.default[0].componentInstance.setWidth(
-                this.$el.style.width
+                parseFloat(this.$el.style.width)
             );
             this.$slots.default[0].componentInstance.setHeight(
-                this.$el.style.height
+                parseFloat(this.$el.style.height)
             );
         },
         t({ event, height }) {
@@ -149,9 +184,10 @@ export default {
                 this.$el.style.height = this.max.height
                     ? `${Math.min(
                           this.max.height,
-                          height + (event.y - this.event.y) * this.speed
+                          height + (event.y - this.event.y) * this.speed * 1.2
                       )}px`
-                    : `${height + (event.y - this.event.y) * this.speed}px`;
+                    : `${height +
+                          (event.y - this.event.y) * this.speed * 1.2}px`;
             } else {
                 this.$el.style.height = this.min.height
                     ? `${Math.max(
@@ -184,8 +220,8 @@ export default {
 .wrapbox {
     position: relative;
     display: table;
-    border: 1px solid rgb(187, 187, 187);
     padding: 2px;
+    position: absolute;
 }
 .line,
 .block {
@@ -193,41 +229,46 @@ export default {
     margin: auto;
 }
 .line-t {
-    top: -5px;
+    top: -2px;
     left: 0;
     right: 0;
     width: 100%;
     height: 10px;
     cursor: s-resize;
+    border-top: 1px solid rgb(187, 187, 187);
 }
 .line-l {
     top: 0;
-    left: -5px;
+    left: -2px;
     bottom: 0;
     width: 10px;
     height: 100%;
     cursor: w-resize;
+    border-left: 1px solid rgb(187, 187, 187);
 }
 .line-r {
     top: 0;
-    right: -5px;
+    right: -2px;
     bottom: 0;
     width: 10px;
     height: 100%;
     cursor: w-resize;
+    border-right: 1px solid rgb(187, 187, 187);
 }
 .line-b {
     left: 0;
     right: 0;
-    bottom: -5px;
+    bottom: -2px;
     width: 100%;
     height: 10px;
     cursor: s-resize;
+    border-bottom: 1px solid rgb(187, 187, 187);
 }
 .block {
     width: 5px;
     height: 5px;
     border: 1px solid rgb(187, 187, 187);
+    background-color: rgb(187, 187, 187);
 }
 .block-tl {
     top: -5px;
